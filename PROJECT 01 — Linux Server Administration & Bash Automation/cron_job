@@ -1,0 +1,1 @@
+*/5 * * * * /home/ubuntu/devops-project/scripts/backup.sh >> /home/ubuntu/backup.log 2>&1

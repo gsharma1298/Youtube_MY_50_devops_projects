@@ -1,0 +1,1663 @@
+====================================================================
+PROJECT 01
+LINUX SERVER ADMINISTRATION & BASH AUTOMATION
+====================================================================
+
+LEVEL:
+Beginner
+
+OBJECTIVE:
+Create an Ubuntu Linux server on AWS EC2, configure and manage
+the server, deploy Nginx, create Bash automation scripts,
+schedule backups using Cron, and maintain the project using Git.
+
+====================================================================
+ARCHITECTURE
+====================================================================
+
+                         INTERNET
+                            |
+                     +------+------+
+                     |             |
+                   SSH :22       HTTP :80
+                     |             |
+                     +------+------+
+                            |
+                    +---------------+
+                    |   AWS EC2     |
+                    | Ubuntu Server |
+                    +-------+-------+
+                            |
+          +-----------------+------------------+
+          |                 |                  |
+          v                 v                  v
+     Linux Admin         Nginx          Bash Automation
+          |                 |                  |
+          |                 v            +-----+------+
+          |             Website          |            |
+          |                              v            v
+          |                         Health Check    Backup
+          |                              |            |
+          v                              v            v
+       systemd                         Cron         Logs
+          |
+          v
+       Services
+
+
+====================================================================
+TOOLS / SERVICES
+====================================================================
+
+AWS EC2
+Ubuntu Linux
+SSH
+Security Groups
+Nginx
+Bash
+systemd
+Cron
+Git
+GitHub
+
+
+====================================================================
+PART 1 - CREATE AWS EC2
+====================================================================
+
+AWS Console
+    |
+    +-- EC2
+    |
+    +-- Launch Instance
+
+INSTANCE CONFIGURATION:
+
+Name:
+devops-project-01
+
+AMI:
+Ubuntu Server LTS
+
+Architecture:
+x86_64
+
+Instance Type:
+Small / Free-Tier Eligible Option
+
+Storage:
+8-10 GB
+
+Security Group:
+
+Inbound Rules:
+
+SSH
+Port: 22
+Source: My IP
+
+HTTP
+Port: 80
+Source: 0.0.0.0/0
+
+
+IMPORTANT:
+
+Do NOT unnecessarily expose SSH to:
+
+0.0.0.0/0
+
+Prefer:
+
+My IP
+
+
+Save the private key:
+
+project01.pem
+
+
+====================================================================
+PART 2 - CONNECT TO EC2
+====================================================================
+
+On local machine:
+
+chmod 400 project01.pem
+
+SSH:
+
+ssh -i project01.pem ubuntu@<PUBLIC-IP>
+
+
+VERIFY:
+
+whoami
+
+hostname
+
+pwd
+
+uname -a
+
+cat /etc/os-release
+
+
+EXPECTED:
+
+User:
+ubuntu
+
+OS:
+Ubuntu Linux
+
+
+====================================================================
+PART 3 - UPDATE SERVER
+====================================================================
+
+sudo apt update
+
+sudo apt upgrade -y
+
+
+Install basic tools:
+
+sudo apt install -y git curl wget vim nano tree htop unzip
+
+
+VERIFY:
+
+git --version
+
+curl --version
+
+tree --version
+
+
+====================================================================
+PART 4 - LINUX USER MANAGEMENT
+====================================================================
+
+Create DevOps user:
+
+sudo adduser devops
+
+
+Add sudo permission:
+
+sudo usermod -aG sudo devops
+
+
+Verify:
+
+id devops
+
+groups devops
+
+
+Check users:
+
+cat /etc/passwd
+
+
+Check current user:
+
+whoami
+
+
+====================================================================
+PART 5 - DIRECTORY STRUCTURE
+====================================================================
+
+Create project directory:
+
+mkdir -p ~/devops-project
+
+cd ~/devops-project
+
+
+Create directories:
+
+mkdir scripts
+
+mkdir docs
+
+mkdir backups
+
+mkdir logs
+
+
+Check:
+
+tree
+
+
+EXPECTED:
+
+devops-project/
+|
++-- scripts/
++-- docs/
++-- backups/
++-- logs/
+
+
+====================================================================
+PART 6 - FILE MANAGEMENT
+====================================================================
+
+Create file:
+
+touch app.log
+
+touch test.txt
+
+
+Create directory:
+
+mkdir test
+
+
+Copy:
+
+cp test.txt test/test.txt
+
+
+Move:
+
+mv test.txt test/
+
+
+Remove:
+
+rm test/test.txt
+
+
+Remove directory:
+
+rmdir test
+
+
+List files:
+
+ls
+
+ls -l
+
+ls -la
+
+
+====================================================================
+PART 7 - FILE PERMISSIONS
+====================================================================
+
+Create file:
+
+touch app.log
+
+
+Check permissions:
+
+ls -l app.log
+
+
+Change permissions:
+
+chmod 640 app.log
+
+
+Change ownership:
+
+sudo chown devops:devops app.log
+
+
+Check again:
+
+ls -l app.log
+
+
+PERMISSION EXPLANATION:
+
+640
+
+Owner:
+rw-
+
+Group:
+r--
+
+Others:
+---
+
+
+Common permissions:
+
+600 = Owner read/write
+644 = Owner read/write, others read
+755 = Owner full, others read/execute
+777 = Full permissions for everyone
+
+Avoid using 777 unnecessarily.
+
+
+====================================================================
+PART 8 - PROCESS MANAGEMENT
+====================================================================
+
+List processes:
+
+ps aux
+
+
+Interactive process monitoring:
+
+top
+
+
+Install/use htop:
+
+htop
+
+
+Find process:
+
+ps aux | grep nginx
+
+
+Check memory:
+
+free -h
+
+
+Check disk:
+
+df -h
+
+
+Check directory size:
+
+du -sh ~/devops-project
+
+
+Find large files:
+
+sudo du -ah /var | sort -rh | head
+
+
+Check uptime:
+
+uptime
+
+
+====================================================================
+PART 9 - INSTALL NGINX
+====================================================================
+
+Install:
+
+sudo apt install nginx -y
+
+
+Start:
+
+sudo systemctl start nginx
+
+
+Enable on boot:
+
+sudo systemctl enable nginx
+
+
+Check status:
+
+sudo systemctl status nginx
+
+
+Check service:
+
+systemctl is-active nginx
+
+
+Test locally:
+
+curl http://localhost
+
+
+====================================================================
+PART 10 - TEST NGINX FROM BROWSER
+====================================================================
+
+Open browser:
+
+http://<EC2-PUBLIC-IP>
+
+
+Expected:
+
+Nginx Welcome Page
+
+
+If website does not open:
+
+1. Check Security Group
+2. Check port 80
+3. Check Nginx status
+4. Check EC2 public IP
+5. Check Nginx logs
+
+
+====================================================================
+PART 11 - CREATE CUSTOM WEBSITE
+====================================================================
+
+Open website file:
+
+sudo nano /var/www/html/index.html
+
+
+Replace with:
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DevOps Project 01</title>
+</head>
+
+<body>
+
+    <h1>Linux Server Administration</h1>
+
+    <h2>DevOps Project 01</h2>
+
+    <p>Application deployed on AWS EC2 using Nginx.</p>
+
+    <p>Tools:</p>
+
+    <ul>
+        <li>AWS EC2</li>
+        <li>Ubuntu Linux</li>
+        <li>Nginx</li>
+        <li>Bash</li>
+        <li>Git</li>
+    </ul>
+
+</body>
+</html>
+
+
+Restart Nginx:
+
+sudo systemctl restart nginx
+
+
+Open:
+
+http://<EC2-PUBLIC-IP>
+
+
+====================================================================
+PART 12 - SYSTEMD
+====================================================================
+
+Check Nginx:
+
+sudo systemctl status nginx
+
+
+Start:
+
+sudo systemctl start nginx
+
+
+Stop:
+
+sudo systemctl stop nginx
+
+
+Restart:
+
+sudo systemctl restart nginx
+
+
+Reload:
+
+sudo systemctl reload nginx
+
+
+Enable on boot:
+
+sudo systemctl enable nginx
+
+
+Disable:
+
+sudo systemctl disable nginx
+
+
+Check active:
+
+systemctl is-active nginx
+
+
+Check enabled:
+
+systemctl is-enabled nginx
+
+
+View service logs:
+
+journalctl -u nginx
+
+
+Last 50 lines:
+
+journalctl -u nginx -n 50
+
+
+Follow logs:
+
+journalctl -u nginx -f
+
+
+====================================================================
+PART 13 - NGINX LOGS
+====================================================================
+
+List logs:
+
+sudo ls -lh /var/log/nginx/
+
+
+Access log:
+
+sudo tail -f /var/log/nginx/access.log
+
+
+Error log:
+
+sudo tail -f /var/log/nginx/error.log
+
+
+Last 50 access log lines:
+
+sudo tail -n 50 /var/log/nginx/access.log
+
+
+Search HTTP 404:
+
+sudo grep "404" /var/log/nginx/access.log
+
+
+Search HTTP 500:
+
+sudo grep "500" /var/log/nginx/access.log
+
+
+Generate traffic:
+
+curl http://localhost
+
+
+Then check:
+
+sudo tail -f /var/log/nginx/access.log
+
+
+====================================================================
+PART 14 - CREATE SERVER HEALTH SCRIPT
+====================================================================
+
+Go to scripts:
+
+cd ~/devops-project/scripts
+
+
+Create:
+
+nano server-health.sh
+
+
+Paste:
+
+#!/bin/bash
+
+echo "================================"
+echo "      SERVER HEALTH CHECK"
+echo "================================"
+
+echo ""
+
+echo "Hostname:"
+hostname
+
+echo ""
+
+echo "Uptime:"
+uptime
+
+echo ""
+
+echo "Memory:"
+free -h
+
+echo ""
+
+echo "Disk:"
+df -h /
+
+echo ""
+
+echo "CPU Load:"
+uptime | awk -F'load average:' '{print $2}'
+
+echo ""
+
+echo "Top CPU Processes:"
+ps aux --sort=-%cpu | head -6
+
+echo ""
+
+echo "Nginx Status:"
+systemctl is-active nginx
+
+echo ""
+
+echo "================================"
+echo "      CHECK COMPLETED"
+echo "================================"
+
+
+Make executable:
+
+chmod +x server-health.sh
+
+
+Run:
+
+./server-health.sh
+
+
+====================================================================
+PART 15 - IMPROVE HEALTH SCRIPT
+====================================================================
+
+Create:
+
+nano server-health-v2.sh
+
+
+Paste:
+
+#!/bin/bash
+
+echo "=========================================="
+echo "        LINUX SERVER HEALTH CHECK"
+echo "=========================================="
+
+echo ""
+echo "DATE:"
+date
+
+echo ""
+echo "HOSTNAME:"
+hostname
+
+echo ""
+echo "UPTIME:"
+uptime
+
+echo ""
+echo "MEMORY:"
+free -h
+
+echo ""
+echo "DISK:"
+df -h /
+
+echo ""
+echo "LOAD:"
+uptime | awk -F'load average:' '{print $2}'
+
+echo ""
+echo "NGINX STATUS:"
+
+if systemctl is-active --quiet nginx
+then
+    echo "Nginx is RUNNING"
+else
+    echo "Nginx is NOT RUNNING"
+fi
+
+echo ""
+echo "TOP CPU PROCESSES:"
+ps aux --sort=-%cpu | head -6
+
+echo ""
+echo "=========================================="
+echo "        HEALTH CHECK COMPLETED"
+echo "=========================================="
+
+
+Make executable:
+
+chmod +x server-health-v2.sh
+
+
+Run:
+
+./server-health-v2.sh
+
+
+====================================================================
+PART 16 - CREATE BACKUP SCRIPT
+====================================================================
+
+Go to scripts:
+
+cd ~/devops-project/scripts
+
+
+Create:
+
+nano backup.sh
+
+
+Paste:
+
+#!/bin/bash
+
+SOURCE="/var/log/nginx"
+
+BACKUP_DIR="/home/ubuntu/devops-project/backups"
+
+mkdir -p "$BACKUP_DIR"
+
+DATE=$(date +"%Y-%m-%d-%H-%M-%S")
+
+BACKUP_FILE="$BACKUP_DIR/nginx-$DATE.tar.gz"
+
+tar -czf "$BACKUP_FILE" "$SOURCE"
+
+echo "=================================="
+echo "Nginx backup completed"
+echo "=================================="
+
+echo "Backup file:"
+echo "$BACKUP_FILE"
+
+
+Make executable:
+
+chmod +x backup.sh
+
+
+Run:
+
+./backup.sh
+
+
+Check:
+
+ls -lh ~/devops-project/backups
+
+
+====================================================================
+PART 17 - TEST BACKUP
+====================================================================
+
+Generate Nginx traffic:
+
+curl http://localhost
+
+curl http://localhost
+
+curl http://localhost
+
+
+Check logs:
+
+sudo tail -n 20 /var/log/nginx/access.log
+
+
+Run backup:
+
+./backup.sh
+
+
+Check:
+
+ls -lh ~/devops-project/backups
+
+
+Extract backup:
+
+tar -tzf <BACKUP-FILE>
+
+
+====================================================================
+PART 18 - CRON JOB
+====================================================================
+
+Open crontab:
+
+crontab -e
+
+
+FOR TESTING:
+
+Run backup every 5 minutes:
+
+*/5 * * * * /home/ubuntu/devops-project/scripts/backup.sh >> /home/ubuntu/backup.log 2>&1
+
+
+Check:
+
+crontab -l
+
+
+Wait 5 minutes.
+
+Check:
+
+ls -lh ~/devops-project/backups
+
+
+Check cron output:
+
+cat ~/backup.log
+
+
+AFTER TESTING:
+
+Change to daily backup:
+
+0 1 * * * /home/ubuntu/devops-project/scripts/backup.sh >> /home/ubuntu/backup.log 2>&1
+
+
+Meaning:
+
+Every day
+At 1:00 AM
+Run backup.sh
+
+
+====================================================================
+PART 19 - CREATE PROJECT README
+====================================================================
+
+Go to:
+
+cd ~/devops-project
+
+
+Create:
+
+nano README.md
+
+
+Paste:
+
+# Project 01 - Linux Server Administration & Bash Automation
+
+## Objective
+
+Build and automate an Ubuntu Linux server on AWS EC2.
+
+## Architecture
+
+Internet
+    |
+    v
+AWS EC2
+    |
+Ubuntu Linux
+    |
+Nginx
+    |
+Website
+
+Bash
+ |
++-- Health Check
+ |
++-- Backup
+ |
+Cron
+
+## Tools
+
+- AWS EC2
+- Ubuntu
+- Linux
+- SSH
+- Nginx
+- Bash
+- systemd
+- Cron
+- Git
+- GitHub
+
+## Tasks Completed
+
+- Created EC2
+- Configured Ubuntu
+- Configured SSH
+- Created Linux users
+- Configured permissions
+- Installed Nginx
+- Deployed website
+- Managed Nginx using systemd
+- Checked Nginx logs
+- Created health check script
+- Created backup script
+- Scheduled backup using Cron
+- Stored project in GitHub
+
+
+====================================================================
+PART 20 - GIT CONFIGURATION
+====================================================================
+
+Check Git:
+
+git --version
+
+
+Configure:
+
+git config --global user.name "YOUR_NAME"
+
+git config --global user.email "YOUR_EMAIL"
+
+
+Initialize repository:
+
+cd ~/devops-project
+
+git init
+
+
+Check:
+
+git status
+
+
+====================================================================
+PART 21 - CREATE .gitignore
+====================================================================
+
+Create:
+
+nano .gitignore
+
+
+Paste:
+
+*.log
+*.pem
+.env
+backups/
+
+
+IMPORTANT:
+
+Never commit:
+
+AWS private key
+Passwords
+Secrets
+API keys
+Environment files
+
+
+====================================================================
+PART 22 - GIT COMMIT
+====================================================================
+
+Check:
+
+git status
+
+
+Add files:
+
+git add .
+
+
+Commit:
+
+git commit -m "Initial Linux DevOps project"
+
+
+Check:
+
+git log --oneline
+
+
+====================================================================
+PART 23 - PUSH TO GITHUB
+====================================================================
+
+Create GitHub repository:
+
+devops-project-01-linux
+
+
+DO NOT initialize GitHub repository with README
+if you already created README locally.
+
+
+Connect:
+
+git branch -M main
+
+git remote add origin <YOUR-GITHUB-REPOSITORY-URL>
+
+git push -u origin main
+
+
+Check GitHub.
+
+Expected project structure:
+
+devops-project/
+|
++-- README.md
+|
++-- .gitignore
+|
++-- scripts/
+|   |
+|   +-- server-health.sh
+|   +-- server-health-v2.sh
+|   +-- backup.sh
+|
++-- docs/
+|
++-- backups/
+|
++-- logs/
+
+
+====================================================================
+PART 24 - TROUBLESHOOTING
+====================================================================
+
+PROBLEM:
+Cannot SSH to EC2
+
+CHECK:
+
+1. EC2 is running
+2. Correct public IP
+3. Correct username
+4. Correct private key
+5. chmod 400 on key
+6. Security Group port 22
+7. Your current public IP
+
+
+COMMAND:
+
+ssh -i project01.pem ubuntu@<PUBLIC-IP>
+
+
+------------------------------------------------------------
+
+PROBLEM:
+Nginx website not opening
+
+CHECK:
+
+sudo systemctl status nginx
+
+systemctl is-active nginx
+
+curl http://localhost
+
+sudo ss -tulpn | grep :80
+
+sudo tail -n 50 /var/log/nginx/error.log
+
+
+Check AWS Security Group:
+
+HTTP
+Port 80
+Source 0.0.0.0/0
+
+
+------------------------------------------------------------
+
+PROBLEM:
+Nginx failed to start
+
+CHECK:
+
+sudo nginx -t
+
+sudo systemctl status nginx
+
+journalctl -u nginx -n 50
+
+
+------------------------------------------------------------
+
+PROBLEM:
+Website showing old page
+
+CHECK:
+
+sudo systemctl restart nginx
+
+Clear browser cache.
+
+Test:
+
+curl http://localhost
+
+
+------------------------------------------------------------
+
+PROBLEM:
+Backup not running
+
+CHECK:
+
+crontab -l
+
+ls -lh ~/devops-project/backups
+
+cat ~/backup.log
+
+
+Run manually:
+
+./backup.sh
+
+
+====================================================================
+PART 25 - IMPORTANT LINUX COMMANDS USED
+====================================================================
+
+USER MANAGEMENT:
+
+whoami
+id
+groups
+sudo
+adduser
+usermod
+passwd
+
+
+FILES:
+
+ls
+ls -l
+ls -la
+pwd
+cd
+mkdir
+touch
+cp
+mv
+rm
+find
+
+
+PERMISSIONS:
+
+chmod
+chown
+chgrp
+
+
+PROCESSES:
+
+ps
+top
+htop
+kill
+pkill
+
+
+SYSTEM:
+
+uname
+hostname
+uptime
+free
+df
+du
+
+
+SERVICES:
+
+systemctl
+journalctl
+
+
+NETWORK:
+
+ip
+ss
+curl
+ping
+
+
+LOGS:
+
+cat
+less
+tail
+head
+grep
+awk
+sed
+
+
+ARCHIVE:
+
+tar
+gzip
+
+
+AUTOMATION:
+
+bash
+cron
+crontab
+
+
+GIT:
+
+git init
+git status
+git add
+git commit
+git log
+git branch
+git remote
+git push
+
+
+====================================================================
+PART 26 - FINAL TEST
+====================================================================
+
+TEST 1:
+
+Open website:
+
+http://<EC2-PUBLIC-IP>
+
+
+TEST 2:
+
+Check Nginx:
+
+systemctl status nginx
+
+
+TEST 3:
+
+Run health check:
+
+./server-health.sh
+
+
+TEST 4:
+
+Generate traffic:
+
+curl http://localhost
+
+
+TEST 5:
+
+Check logs:
+
+sudo tail -n 20 /var/log/nginx/access.log
+
+
+TEST 6:
+
+Run backup:
+
+./backup.sh
+
+
+TEST 7:
+
+Check backup:
+
+ls -lh ~/devops-project/backups
+
+
+TEST 8:
+
+Check Cron:
+
+crontab -l
+
+
+TEST 9:
+
+Check Git:
+
+git status
+
+git log --oneline
+
+
+====================================================================
+PART 27 - FAILURE TESTING
+====================================================================
+
+STOP NGINX:
+
+sudo systemctl stop nginx
+
+
+Check:
+
+systemctl status nginx
+
+
+Run health script:
+
+./server-health-v2.sh
+
+
+Expected:
+
+Nginx is NOT RUNNING
+
+
+START NGINX:
+
+sudo systemctl start nginx
+
+
+Check:
+
+systemctl status nginx
+
+
+Open website again.
+
+
+====================================================================
+PART 28 - FINAL PROJECT ARCHITECTURE
+====================================================================
+
+                         INTERNET
+                            |
+                +-----------+-----------+
+                |                       |
+              SSH                      HTTP
+              :22                       :80
+                |                       |
+                +-----------+-----------+
+                            |
+                    +---------------+
+                    |    AWS EC2    |
+                    | Ubuntu Linux  |
+                    +-------+-------+
+                            |
+              +-------------+-------------+
+              |             |             |
+              v             v             v
+           Linux          Nginx         Bash
+        Administration      |        Automation
+              |             |             |
+              |             v       +-----+-----+
+              |         Website      |           |
+              |                      v           v
+              |                  Health       Backup
+              |                   Check          |
+              |                      |            |
+              v                      v            v
+           systemd                Cron         Archive
+              |
+              v
+          Nginx Service
+              |
+              v
+             Logs
+              |
+              v
+            Git
+              |
+              v
+           GitHub
+
+
+====================================================================
+PART 29 - YOUTUBE VIDEO FLOW
+====================================================================
+
+00:00
+Introduction
+
+01:00
+Project Architecture
+
+03:00
+Create AWS EC2
+
+07:00
+Connect using SSH
+
+10:00
+Linux Administration
+
+15:00
+Users and Permissions
+
+20:00
+Process and Disk Management
+
+25:00
+Install Nginx
+
+30:00
+Deploy Website
+
+35:00
+systemd
+
+40:00
+Nginx Logs
+
+45:00
+Bash Health Check
+
+50:00
+Backup Script
+
+55:00
+Cron Automation
+
+60:00
+Git and GitHub
+
+65:00
+Troubleshooting
+
+70:00
+Final Architecture
+
+75:00
+Project Summary
+
+78:00
+Introduction to Project 02
+
+
+====================================================================
+PART 30 - YOUTUBE ARCHITECTURE EXPLANATION
+====================================================================
+
+SAY:
+
+"In this project, we are starting with a basic AWS EC2 instance
+running Ubuntu Linux.
+
+The first layer is the infrastructure layer, where AWS EC2
+provides our Linux server.
+
+We connect to the server using SSH.
+
+Inside the server, we perform Linux administration such as
+user management, permissions, process management and disk
+management.
+
+For the application layer, we install Nginx and deploy a
+simple website.
+
+We use systemd to manage the Nginx service and Nginx logs
+to troubleshoot application requests and errors.
+
+Then we introduce automation using Bash.
+
+Our first script performs a server health check by checking
+CPU load, memory, disk usage, processes and Nginx status.
+
+Our second script creates backups of Nginx logs.
+
+Finally, Cron automatically executes our backup script on
+a schedule.
+
+The complete project is maintained using Git and GitHub.
+
+So this project demonstrates the complete flow from server
+provisioning, Linux administration, application deployment,
+monitoring, automation and version control."
+
+
+====================================================================
+PART 31 - INTERVIEW EXPLANATION
+====================================================================
+
+QUESTION:
+
+Explain your Linux DevOps project.
+
+ANSWER:
+
+"I created an Ubuntu-based AWS EC2 server and configured it
+for application hosting.
+
+I connected to the server using SSH and performed Linux
+administration including user management, permissions,
+process monitoring, disk monitoring and service management.
+
+I installed Nginx and deployed a custom web application.
+
+I used systemd to manage the Nginx service and analyzed
+Nginx access and error logs for troubleshooting.
+
+I also created Bash scripts for server health monitoring
+and automated Nginx log backups.
+
+Cron was used to schedule the backup process.
+
+Finally, I maintained the scripts and configuration in Git
+and pushed the project to GitHub."
+
+
+====================================================================
+PROJECT 01 COMPLETION CHECKLIST
+====================================================================
+
+[ ] AWS EC2 created
+
+[ ] Ubuntu installed
+
+[ ] Security Group configured
+
+[ ] SSH configured
+
+[ ] Server connected
+
+[ ] Linux users created
+
+[ ] Groups configured
+
+[ ] File permissions practiced
+
+[ ] Processes checked
+
+[ ] Memory checked
+
+[ ] Disk checked
+
+[ ] Nginx installed
+
+[ ] Nginx started
+
+[ ] Nginx enabled
+
+[ ] Website deployed
+
+[ ] systemd practiced
+
+[ ] Nginx logs checked
+
+[ ] Health check script created
+
+[ ] Backup script created
+
+[ ] Cron configured
+
+[ ] Git initialized
+
+[ ] .gitignore created
+
+[ ] GitHub repository created
+
+[ ] Code pushed to GitHub
+
+[ ] Failure testing completed
+
+[ ] README created
+
+[ ] Architecture documented
+
+[ ] YouTube video recorded
+
+
+====================================================================
+PROJECT 01 COMPLETE
+====================================================================
+
+NEXT PROJECT:
+
+PROJECT 02
+AWS EC2 + NGINX + TOMCAT + JAVA APPLICATION HOSTING
+
+NEXT TOPICS:
+
+EC2
++
+Nginx
++
+Tomcat
++
+Java
++
+WAR Deployment
++
+Security Groups
++
+S3 Backup
++
+Bash Deployment Automation
+
+
+====================================================================
+END
+====================================================================

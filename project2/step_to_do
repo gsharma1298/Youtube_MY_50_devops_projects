@@ -1,0 +1,440 @@
+
+DEVOPS PROJECT #2
+==============================
+
+PROJECT TITLE:
+AWS EC2 + Nginx + Tomcat 10 
+
+
+==================================================
+1. PROJECT OBJECTIVE
+==================================================
+
+
+==================================================
+2. FINAL ARCHITECTURE
+==================================================
+
+                         INTERNET
+                             |
+                             | HTTP :80
+                             |
+                             v
+                    +----------------+
+                    |    AWS EC2     |
+                    | Ubuntu Linux   |
+                    +-------+--------+
+                            |
+                            v
+                    +----------------+
+                    |     NGINX      |
+                    |   Port :80     |
+                    +-------+--------+
+                            |
+                            | Reverse Proxy
+                            | localhost:8080
+                            v
+                    +----------------+
+                    |    TOMCAT 10   |
+                    |   Port :8080   |
+                    +-------+--------+
+                            |
+                            v
+                    +----------------+
+                    |   JAVA WAR     |
+                    |  APPLICATION   |
+                    +----------------+
+
+
+Supporting Components:
+
+Java 21
+systemd
+Nginx Logs
+Tomcat Logs
+Bash
+Git/GitHub
+
+
+
+==================================================
+4. AWS EC2 CREATION
+=================================================
+
+
+
+
+
+==================================================
+6. UPDATE UBUNTU
+==================================================
+
+sudo apt update
+
+sudo apt upgrade -y
+
+
+Install useful tools:
+
+sudo apt install -y git curl wget vim nano unzip tree htop
+
+
+==================================================
+7. INSTALL JAVA 21
+==================================================
+
+Install Java 21:
+
+sudo apt install -y openjdk-21-jdk
+
+java --version
+
+==================================================
+8. INSTALL TOMCAT 10 USING APT
+==================================================
+
+Install Tomcat 10:
+
+sudo apt install -y tomcat10
+
+
+Check Tomcat service:
+
+sudo systemctl status tomcat10
+
+
+
+==================================================
+10. TOMCAT IMPORTANT DIRECTORIES
+==================================================
+
+
+Configuration:
+
+/etc/tomcat10/
+
+
+Web applications:
+
+/var/lib/tomcat10/webapps/
+
+
+Logs:
+
+/var/log/tomcat10/
+
+
+Main configuration:
+
+/etc/tomcat10/server.xml
+
+
+
+
+
+==================================================
+12. TOMCAT SERVICE COMMANDS
+==================================================
+
+sudo systemctl start tomcat10
+
+sudo systemctl stop tomcat10
+
+sudo systemctl restart tomcat10
+
+sudo systemctl reload tomcat10
+
+sudo systemctl enable tomcat10
+
+sudo systemctl disable tomcat10
+
+sudo systemctl status tomcat10
+
+
+==================================================
+13. TOMCAT LOGS
+==================================================
+
+sudo journalctl -u tomcat10
+
+
+Live systemd logs:
+
+sudo journalctl -u tomcat10 -f
+
+
+Last 50 lines:
+
+sudo journalctl -u tomcat10 -n 50
+
+
+==================================================
+14. DEPLOY JAVA WAR APPLICATION
+==================================================
+
+Tomcat webapps directory:
+
+/var/lib/tomcat10/webapps/
+
+Copy:
+sudo cp shopping-cart.war /var/lib/tomcat10/webapps/
+
+
+==================================================
+18. INSTALL NGINX
+==================================================
+
+sudo apt install -y nginx
+
+sudo systemctl start nginx
+
+sudo systemctl enable nginx
+
+==================================================
+19. NGINX REVERSE PROXY
+==================================================
+
+Our final flow:
+
+USER
+ |
+ | HTTP :80
+ v
+NGINX
+ |
+ | localhost:8080
+ v
+TOMCAT
+ |
+ v
+JAVA APPLICATION
+
+
+Create Nginx configuration:
+
+sudo nano /etc/nginx/sites-available/java-app
+
+
+Add:
+
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+
+==================================================
+20. ENABLE NGINX CONFIGURATION
+==================================================
+
+Create symbolic link:
+
+sudo ln -s /etc/nginx/sites-available/java-app 
+/etc/nginx/sites-enabled/java-app
+
+
+Remove default site:
+
+sudo rm -f /etc/nginx/sites-enabled/default
+
+
+Test configuration:
+
+sudo nginx -t
+
+
+Expected:
+
+syntax is ok
+test is successful
+
+
+Reload:
+
+sudo systemctl reload nginx
+
+
+==================================================
+21. TEST COMPLETE APPLICATION
+==================================================
+
+
+
+==================================================
+22. NGINX LOGS
+==================================================
+
+Access log:
+
+sudo tail -f /var/log/nginx/access.log
+
+
+Error log:
+
+sudo tail -f /var/log/nginx/error.log
+
+
+Search errors:
+
+sudo grep -i error /var/log/nginx/error.log
+
+
+Search 502:
+
+sudo grep "502" /var/log/nginx/access.log
+
+
+==================================================
+23. TOMCAT LOGS
+==================================================
+
+Check:
+
+sudo ls -lh /var/log/tomcat10/
+
+
+Check service logs:
+
+sudo journalctl -u tomcat10 -n 50
+
+
+Live:
+
+sudo journalctl -u tomcat10 -f
+
+
+This is very important during troubleshooting.
+
+
+
+
+==================================================
+36. FINAL ARCHITECTURE
+==================================================
+
+                     USER
+                       |
+                       |
+                    HTTP :80
+                       |
+                       v
+              +----------------+
+              |     AWS EC2    |
+              | Ubuntu Linux   |
+              +-------+--------+
+                      |
+                      v
+              +----------------+
+              |     NGINX      |
+              |   Reverse      |
+              |     Proxy      |
+              +-------+--------+
+                      |
+                      |
+                 localhost:8080
+                      |
+                      v
+              +----------------+
+              |   TOMCAT 10    |
+              |   Java 21      |
+              +-------+--------+
+                      |
+                      v
+              +----------------+
+              |   Java WAR     |
+              |  Application    |
+              +----------------+
+
+
+
+
+==================================================
+37. INTERVIEW EXPLANATION
+==================================================
+
+QUESTION:
+
+Explain your project.
+
+
+ANSWER:
+
+"In this project, I deployed a Java web application on an AWS EC2
+Ubuntu server.
+
+I installed Java 21 and Tomcat 10 using the Ubuntu APT package
+manager. I deployed the Java WAR application into Tomcat's webapps
+directory.
+
+For frontend traffic, I installed Nginx and configured it as a
+reverse proxy. Nginx listens on port 80 and forwards requests to
+Tomcat running on localhost port 8080.
+
+I also configured and managed Tomcat using systemd, monitored Nginx
+and Tomcat logs, and created a Bash deployment script to simplify
+WAR deployment.
+
+For security, I exposed only SSH and HTTP through the EC2 Security
+Group and kept Tomcat port 8080 private.
+
+I also tested failure scenarios such as stopping Tomcat and
+troubleshooting the resulting 502 Bad Gateway error."
+
+
+VIDEO FLOW:
+
+1. Project architecture
+2. Create EC2
+3. Configure Security Group
+4. SSH into Ubuntu
+5. Install Java 21
+6. Install Tomcat 10 using APT
+7. Start Tomcat
+8. Verify port 8080
+9. Deploy WAR
+10. Test Java application
+11. Install Nginx
+12. Configure reverse proxy
+13. Test application through port 80
+14. Check logs
+15. Stop Tomcat intentionally
+16. Show 502 error
+17. Troubleshoot
+18. Start Tomcat
+19. Verify recovery
+20. Git/GitHub
+21. Explain final architecture
+
+
+NEXT PROJECT:
+
+PROJECT #3
+
+S3 Storage
++
+CloudFront
++
+Route 53
++
+IAM
++
+Versioning
++
+Lifecycle
++
+Backup
++
+Disaster Recovery
+
+==================================================
+END
+==================================================

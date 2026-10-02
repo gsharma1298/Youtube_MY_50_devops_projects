@@ -1,1 +1,691 @@
-Hello WElcome to project
+```text
+============================================================
+                 DEVOPS PROJECT #4
+============================================================
+
+PROJECT TITLE:
+AWS VPC Networking + Nginx Reverse Proxy + Private
+Tomcat Application
+
+============================================================
+1. PROJECT OBJECTIVE
+============================================================
+
+Is project ka main objective ek secure AWS VPC architecture
+create karna hai jisme:
+
+1. Internet se website access ho.
+2. Nginx public subnet mein ho.
+3. Actual application private subnet mein ho.
+4. Private subnet mein Tomcat application chale.
+5. Internet user directly Tomcat ko access na kar sake.
+6. Nginx reverse proxy request ko private Tomcat server tak
+   forward kare.
+7. NAT Gateway private server ko outbound Internet access de.
+8. Security Groups ke through traffic restrict kiya jaye.
+9. AWS VPC ke Public/Private subnet concept ko practically
+   demonstrate kiya jaye.
+
+
+============================================================
+2. FINAL ARCHITECTURE
+============================================================
+
+
+                         INTERNET
+                            |
+                            | HTTP :80
+                            v
+                  +----------------------+
+                  |   INTERNET GATEWAY   |
+                  +----------+-----------+
+                             |
+                             v
+              =================================
+                    PUBLIC SUBNET
+                    10.0.1.0/24
+              =================================
+                             |
+                             |
+                  +----------+----------+
+                  |                     |
+                  |   NGINX EC2        |
+                  |                     |
+                  | Public IP           |
+                  | Private IP         |
+                  | Port :80            |
+                  +----------+----------+
+                             |
+                             | HTTP :8080
+                             | Private IP
+                             v
+              =================================
+                   PRIVATE SUBNET
+                   10.0.2.0/24
+              =================================
+                             |
+                  +----------+----------+
+                  |                     |
+                  |  TOMCAT EC2         |
+                  |                     |
+                  | Private IP         |
+                  | Port :8080          |
+                  | Java Application    |
+                  +----------+----------+
+                             |
+                             |
+                             | Outbound Internet
+                             v
+                    +----------------+
+                    |  NAT GATEWAY   |
+                    +-------+--------+
+                            |
+                            v
+                    INTERNET GATEWAY
+                            |
+                            v
+                         INTERNET
+
+
+============================================================
+3. REQUEST FLOW
+============================================================
+
+User Browser
+     |
+     | http://NGINX-PUBLIC-IP
+     |
+     v
+Internet Gateway
+     |
+     v
+Public Subnet
+     |
+     v
+Nginx EC2 :80
+     |
+     | proxy_pass
+     | http://10.0.2.x:8080
+     |
+     v
+Private Subnet
+     |
+     v
+Tomcat EC2 :8080
+     |
+     v
+Java Web Application
+     |
+     v
+Response
+     |
+     v
+Nginx
+     |
+     v
+User Browser
+
+
+============================================================
+4. AWS COMPONENTS USED
+============================================================
+
+AWS Services:
+
+1. VPC
+2. Internet Gateway
+3. Public Subnet
+4. Private Subnet
+5. Route Tables
+6. NAT Gateway
+7. Elastic IP
+8. EC2
+9. Security Groups
+
+Software:
+
+1. Ubuntu
+2. Nginx
+3. Java 21
+4. Tomcat 10
+5. Git
+6. Bash
+
+
+============================================================
+5. NETWORK DESIGN
+============================================================
+
+VPC CIDR:
+
+10.0.0.0/16
+
+
+PUBLIC SUBNET:
+
+10.0.1.0/26
+
+
+
+PRIVATE SUBNET:
+
+10.0.2.0/26
+
+
+============================================================
+6. CREATE VPC
+============================================================
+
+============================================================
+7. CREATE INTERNET GATEWAY
+============================================================
+
+============================================================
+8. CREATE PUBLIC SUBNET
+============================================================
+
+============================================================
+9. CREATE PRIVATE SUBNET
+============================================================
+
+============================================================
+10. PUBLIC ROUTE TABLE
+============================================================
+
+============================================================
+11. CREATE ELASTIC IP
+============================================================
+
+============================================================
+12. CREATE NAT GATEWAY
+============================================================
+
+============================================================
+13. PRIVATE ROUTE TABLE
+============================================================
+
+============================================================
+14. IMPORTANT ROUTING CONCEPT
+============================================================
+
+Public subnet:
+
+Internet
+    |
+Internet Gateway
+    |
+Public EC2
+
+
+Private subnet:
+
+Private EC2
+    |
+NAT Gateway
+    |
+Internet Gateway
+    |
+Internet
+
+
+============================================================
+15. CREATE SECURITY GROUP FOR NGINX
+============================================================
+
+===========================================================
+16. CREATE SECURITY GROUP FOR TOMCAT
+============================================================
+============================================================
+17. LAUNCH NGINX EC2
+============================================================
+
+============================================================
+18. CONNECT TO NGINX EC2
+============================================================
+
+============================================================
+19. UPDATE NGINX SERVER
+============================================================
+
+sudo apt update
+sudo apt upgrade -y
+sudo apt install nginx -y
+
+============================================================
+20. TEST NGINX FROM INTERNET
+============================================================
+============================================================
+21. LAUNCH PRIVATE TOMCAT EC2
+============================================================
+============================================================
+22. HOW TO CONNECT TO PRIVATE EC2
+============================================================
+
+============================================================
+23. INSTALL JAVA 21
+============================================================
+
+On private Tomcat EC2:
+
+sudo apt update
+
+sudo apt install openjdk-21-jdk -y
+
+============================================================
+24. INSTALL TOMCAT 10
+============================================================
+
+sudo apt install tomcat10 -y
+
+============================================================
+26. CHECK TOMCAT
+============================================================
+curl localhost:8080
+
+============================================================
+27. CREATE SAMPLE WEBSITE
+============================================================
+
+Create:
+
+sudo nano /opt/tomcat/webapps/ROOT/index.html
+
+
+Add:
+
+------------------------------------------------------------
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HR 82 DevOps</title>
+</head>
+
+<body>
+
+    <h1>Welcome to HR 82 DevOps</h1>
+
+    <h2>DevOps Project #4   this web is running on private</h2>
+
+    <p>
+        Nginx Public Subnet
+        ->
+        Tomcat Private Subnet
+    </p>
+
+</body>
+
+</html>
+
+------------------------------------------------------------
+
+
+Restart:
+
+sudo systemctl restart tomcat
+
+
+Test from private EC2:
+
+curl localhost:8080
+
+
+============================================================
+28. TEST PRIVATE SERVER FROM NGINX
+============================================================
+
+Now connect to Nginx EC2.
+
+
+Run:
+
+curl http://10.0.2.10:8080
+
+
+Replace:
+
+10.0.2.10
+
+with actual Tomcat private IP.
+
+
+If everything is correct, you should receive:
+
+Welcome to HR 82 DevOps
+
+
+This proves:
+
+Nginx EC2
+    |
+    | VPC Local Routing
+    |
+Tomcat Private EC2
+
+
+is working.
+
+
+============================================================
+29. CONFIGURE NGINX REVERSE PROXY
+============================================================
+
+On Nginx EC2:
+
+sudo nano /etc/nginx/sites-available/default
+
+
+Add:
+
+------------------------------------------------------------
+
+server {
+
+    listen 80;
+
+    server_name _;
+
+    location / {
+
+        proxy_pass http://10.0.2.151:8080;
+
+        proxy_set_header Host $host;
+
+        proxy_set_header X-Real-IP $remote_addr;
+
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+    }
+
+}
+
+------------------------------------------------------------
+
+
+Replace:
+
+10.0.2.10
+
+with actual private IP of Tomcat.
+
+
+============================================================
+30. ENABLE NGINX CONFIGURATION
+============================================================
+
+Create symbolic link:
+
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+
+Remove default configuration:
+
+sudo rm /etc/nginx/sites-enabled/default
+
+Reload:
+
+sudo systemctl reload nginx
+
+
+============================================================
+31. FINAL WEBSITE TEST
+============================================================
+
+Open browser from your laptop:
+
+http://<NGINX-PUBLIC-IP>
+
+
+Example:
+
+http://13.x.x.x
+
+
+You should see:
+
+Welcome to HR 82 DevOps
+
+DevOps Project #4
+
+Nginx Public Subnet
+->
+Tomcat Private Subnet
+
+
+============================================================
+32. WHAT ACTUALLY HAPPENS
+============================================================
+
+============================================================
+33. WHY PRIVATE SERVER IS SECURE
+============================================================
+
+Tomcat EC2 has:
+
+No Public IP
+
+Therefore user cannot directly access:
+
+http://10.0.2.10:8080
+
+
+Also Security Group allows:
+
+8080
+ONLY FROM
+nginx-public-sg
+
+
+Therefore:
+
+Internet
+   X
+   |
+Tomcat
+
+
+Internet
+   |
+   v
+Nginx
+   |
+   v
+Tomcat
+
+
+Only Nginx can access Tomcat.
+
+
+
+============================================================
+48. INTERVIEW EXPLANATION
+============================================================
+
+INTERVIEWER:
+
+Why did you put Nginx in the public subnet?
+
+
+ANSWER:
+
+I wanted to expose only the reverse proxy to the Internet.
+The actual application server is deployed in the private
+subnet, so users cannot directly access the application.
+
+
+INTERVIEWER:
+
+How does Nginx communicate with the private server?
+
+
+ANSWER:
+
+Nginx communicates with the private Tomcat server using its
+private IP address. Both servers are inside the same VPC, so
+AWS uses the VPC local route for communication.
+
+
+INTERVIEWER:
+
+Does the Nginx-to-Tomcat traffic go through NAT Gateway?
+
+
+ANSWER:
+
+No.
+
+NAT Gateway is not used for communication between the public
+and private subnets inside the same VPC.
+
+The traffic uses the VPC local route.
+
+
+INTERVIEWER:
+
+Why do you need NAT Gateway?
+
+
+ANSWER:
+
+The private EC2 needs outbound Internet access for activities
+such as downloading packages and updates, but it should not
+accept inbound connections from the Internet.
+
+NAT Gateway provides this outbound Internet connectivity.
+
+
+INTERVIEWER:
+
+Can Internet users access Tomcat directly?
+
+
+ANSWER:
+
+No.
+
+The Tomcat EC2 does not have a public IP and its Security Group
+allows port 8080 only from the Nginx Security Group.
+
+
+INTERVIEWER:
+
+What happens when the user opens the website?
+
+
+ANSWER:
+
+The request first reaches the public Nginx EC2 through the
+Internet Gateway. Nginx then forwards the request to the
+private Tomcat server using its private IP. Tomcat processes
+the request and sends the response back through Nginx to the
+user.
+
+       
+============================================================
+52. FINAL PROJECT RESULT
+============================================================
+
+BEFORE:
+
+Internet
+   |
+   v
+Application Server
+
+Application server exposed directly.
+
+
+AFTER:
+
+Internet
+   |
+   v
+Internet Gateway
+   |
+   v
+Nginx
+PUBLIC SUBNET
+   |
+   | Private Network
+   v
+Tomcat
+PRIVATE SUBNET
+   |
+   v
+Java Application
+
+
+This architecture demonstrates how a public reverse proxy can
+provide controlled access to an application hosted inside a
+private subnet.
+
+
+============================================================
+53. CLEANUP
+============================================================
+
+After project/demo:
+
+1. Terminate Nginx EC2.
+2. Terminate Tomcat EC2.
+3. Delete NAT Gateway.
+4. Release Elastic IP.
+5. Delete route tables.
+6. Delete subnets.
+7. Detach Internet Gateway.
+8. Delete Internet Gateway.
+9. Delete Security Groups.
+10. Delete VPC.
+
+
+IMPORTANT:
+
+NAT Gateway and Elastic IP can generate AWS charges.
+
+Delete them after completing the project if they are not needed.
+
+
+============================================================
+                 PROJECT #4 COMPLETE
+============================================================
+
+Project:
+
+AWS VPC Networking
++
+Public/Private Subnet
++
+Internet Gateway
++
+NAT Gateway
++
+Nginx Reverse Proxy
++
+Private Tomcat
++
+Java Application
+
+Final access:
+
+Internet
+    |
+    v
+Nginx Public IP
+    |
+    v
+Private Tomcat
+    |
+    v
+Website
+
+
+============================================================
+```
+
+Is project ka **main interview point** ye hai:
+
+> **“I exposed only Nginx to the Internet. The application server runs in a private subnet. Nginx communicates with Tomcat using the private IP over the VPC local route, while NAT Gateway is used only for outbound Internet connectivity from the private subnet.”**
+
+Isse aap Project 5 mein naturally **Nginx → ALB → Auto Scaling → Multi-AZ** architecture ki taraf move kar sakte ho.

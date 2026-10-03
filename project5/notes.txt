@@ -1,1 +1,40 @@
-Hello WElcome to project
+
+============================================================
+                 DEVOPS PROJECT #5
+============================================================
+
+PROJECT TITLE:
+
+AWS High Availability Web Application
+ALB + Auto Scaling + Multi-AZ + Private EC2
+
+============================================================
+3. PROJECT #5 SOLUTION
+============================================================
+
+Project #5 mein:
+
+                    INTERNET
+                        |
+                        v
+               INTERNET GATEWAY
+                        |
+                        v
+              APPLICATION LOAD
+                 BALANCER
+                    ALB
+                        |
+             +----------+----------+
+             |                     |
+             v                     v
+        PRIVATE AZ-1          PRIVATE AZ-2
+             |                     |
+             v                     v
+        EC2 / TOMCAT           EC2 / TOMCAT
+             |                     |
+             +----------+----------+
+                        |
+                        v
+                   APPLICATION
+
+

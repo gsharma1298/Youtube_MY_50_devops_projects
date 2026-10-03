@@ -1,7 +1,8 @@
 
-============================================================
+========================================================================================================================
+
                  DEVOPS PROJECT #5
-============================================================
+========================================================================================================================
 
 PROJECT TITLE:
 
@@ -36,5 +37,148 @@ Project #5 mein:
                         |
                         v
                    APPLICATION
+============================================================
+NGINX REVERSE PROXY USING DEFAULT CONFIGURATION
+============================================================
+
+============================================================
+1. UPDATE UBUNTU
+============================================================
+
+sudo apt update
+sudo apt upgrade -y
+sudo apt install nginx -y
+sudo systemctl status nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+
+============================================================
+4. CHECK DEFAULT NGINX CONFIGURATION
+============================================================
+
+Default configuration file:
+
+/etc/nginx/sites-available/default
+
+
+Check the file:
+
+sudo nano /etc/nginx/sites-available/default
+
+
+============================================================
+5. REMOVE DEFAULT WEB PAGE
+============================================================
+
+The default HTML page is:
+
+/var/www/html/index.nginx-debian.html
+
+
+Remove it:
+
+sudo rm /var/www/html/index.nginx-debian.html
+
+
+============================================================
+6. CREATE YOUR OWN WEB PAGE
+============================================================
+
+sudo nano /var/www/html/index.html
+
+
+Add:
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nginx Reverse Proxy</title>
+</head>
+<body>
+
+    <h1>Nginx Reverse Proxy is Working!</h1>
+
+</body>
+</html>
+
+
+============================================================
+7. CREATE SYMBOLIC LINK FOR DEFAULT CONFIGURATION
+============================================================
+
+Normally Ubuntu already creates this link during Nginx installation.
+
+Check:
+
+ls -l /etc/nginx/sites-enabled/
+
+
+Expected:
+
+default -> /etc/nginx/sites-available/default
+
+
+If the symbolic link does not exist:
+
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+
+
+
+============================================================
+9. EDIT DEFAULT NGINX CONFIGURATION
+============================================================
+
+sudo nano /etc/nginx/sites-available/default
+
+
+Use the following configuration:
+
+server {
+
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name _;
+
+    location / {
+
+        proxy_pass http://127.0.0.1:8080;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+    }
+}
+
+
+============================================================
+10. UNDERSTAND THE REVERSE PROXY
+============================================================
+
+The important line is:
+
+proxy_pass http://127.0.0.1:8080;
+
+
+It means:
+
+Browser
+   |
+   | Port 80
+   ↓
+Nginx
+   |
+   | proxy_pass
+   ↓
+127.0.0.1:8080
+   |
+   ↓
+Tomcat
+
+
+
 
 
